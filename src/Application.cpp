@@ -6,6 +6,9 @@
 #include <fstream>
 #include <sstream>
 
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+
 static void parseShader(const std::string& filepath, std::string* outVertexShader, std::string* outFragmentShader)
 {
     enum class ShaderType
@@ -137,19 +140,14 @@ int main(void)
 
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    unsigned int IBO; // index buffer
-    glGenBuffers(1, &IBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    VertexBuffer vb(vertices, sizeof(vertices));
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    IndexBuffer ib(indices, sizeof(indices) / sizeof(unsigned int)); // (, count)
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -188,6 +186,7 @@ int main(void)
 
     }
 
+    // Cleanup
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteProgram(shaderProgram);
