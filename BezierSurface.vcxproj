@@ -148,6 +148,10 @@
     <ClCompile Include="dependencies\GLAD\glad.c" />
     <ClCompile Include="src\Application.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="res\shaders\basic.shader" />
+    <None Include="res\shaders\fancy.shader" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
