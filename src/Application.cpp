@@ -16,6 +16,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
+#include "glm/gtc/matrix_transform.hpp"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -27,7 +28,7 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
-void ShowFPSCounter()
+void FPSCounter()
 {
     static float fps = 0.0f;
     static float frameTime = 0.0f;
@@ -44,6 +45,8 @@ void ShowFPSCounter()
 
 int main(void) 
 {
+    int WIDTH = 800;
+    int HEIGHT = 600;
     /* INITIALIZATION */
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -51,7 +54,7 @@ int main(void)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Hello Window", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Hello Window", NULL, NULL);
     if (!window)
     {
         std::cout << "Failed to create GLFW window!\n";
@@ -66,8 +69,10 @@ int main(void)
     }
     std::cout << glGetString(GL_VERSION) << '\n';
 
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, WIDTH, HEIGHT);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    glEnable(GL_DEPTH_TEST);
 
 
     /* ACTUAL CODE STARTS HERE */
@@ -83,6 +88,7 @@ int main(void)
         0, 1, 2,
         0, 2, 3
     };
+
 
     VertexArray va;
     VertexBuffer vb(vertices, sizeof(vertices));
@@ -119,19 +125,25 @@ int main(void)
         // Render
         renderer.Clear();
         renderer.Draw(va, ib, shader);
-        
-        //double currentTime = glfwGetTime();
-        //shader.SetUniform1f("iTime", (float)currentTime);
 
-    	// Start ImGui frame
+        // MVP //
+        glm::mat4 model = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
+        glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+        glm::mat4 MVP = proj * view * model;
+        shader.SetUniformMatrix4f("MVP", MVP);
+
+
+    	// ImGui here //
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ShowFPSCounter();
+        FPSCounter();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        //ImGui end //
 
         // Swap buffers
         glfwSwapBuffers(window);

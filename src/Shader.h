@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <string>
 
+#include "glm/glm.hpp"
+
 enum class ShaderType
 {
 	NONE = -1, VERTEX = 0, FRAGMENT = 1,
@@ -35,6 +37,8 @@ public:
 	void SetUniform1d(const std::string& name, double v0);
 	void SetUniform3f(const std::string& name, float v0, float v1, float v2);
 	void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3);
+	void SetUniformMatrix4f(const std::string& name, const glm::mat4& mat);
+
 
 	int GetUniformLocation(const std::string& name);
 };

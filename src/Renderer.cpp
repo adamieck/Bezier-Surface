@@ -2,8 +2,8 @@
 
 void Renderer::Clear()
 {
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // bg
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(0.19f, 0.196f, 0.267f, 1.0f); // bg Surface0 catppucin palette
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Shader& shader) const
