@@ -8,8 +8,14 @@
 
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "Renderer.h"
 #include "Shader.h"
+#include "Texture.h"
 #include "VertexArray.h"
+#include "glm/glm.hpp"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -21,9 +27,24 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
+void ShowFPSCounter()
+{
+    static float fps = 0.0f;
+    static float frameTime = 0.0f;
+    static float lastTime = 0.0f;
+
+    float currentTime = glfwGetTime();
+    frameTime = currentTime - lastTime;
+    lastTime = currentTime;
+
+    fps = 1.0f / frameTime;
+
+    ImGui::Text("FPS: %.1f", fps);
+}
 
 int main(void) 
 {
+    /* INITIALIZATION */
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -49,12 +70,13 @@ int main(void)
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 
-    float vertices[] = {
-    -1.0f, 1.0f, 0.0f,
-    -1.0f, -1.0f, 0.0f,
-    1.0f, -1.0f, 0.0f,
+    /* ACTUAL CODE STARTS HERE */
 
-    1.0f, 1.0f, 0.0f // additional vertex (square-maker)
+    float vertices[] = {    // tex coords
+    -1.0f, 1.0f, 0.0f,      0.0f, 1.0f,
+    -1.0f, -1.0f, 0.0f,     0.0f, 0.0f,
+    1.0f, -1.0f, 0.0f,      1.0f, 0.0f,
+    1.0f, 1.0f, 0.0f,       1.0f, 1.0f
     };
 
     unsigned int indices[] = {
@@ -67,21 +89,27 @@ int main(void)
     VBLayout layout;
 
     layout.Push(GL_FLOAT, 3);
+    layout.Push(GL_FLOAT, 2);
     va.AddBuffer(vb, layout);
 
     IndexBuffer ib(indices, sizeof(indices) / sizeof(unsigned int)); // (, count)
-    
+
     Shader shader;
-    shader.AddShader("res/shaders/fancy.vert", ShaderType::VERTEX)
-        .AddShader("res/shaders/fancy.frag", ShaderType::FRAGMENT);
+    shader.AddShader("res/shaders/basic.vert", ShaderType::VERTEX)
+        .AddShader("res/shaders/basic.frag", ShaderType::FRAGMENT);
     shader.Build();
     shader.Bind();
 
-    /*int viewportWidth, viewportHeight;
-    glfwGetFramebufferSize(window, &viewportWidth, &viewportHeight);
-    shader.SetUniform3f("iResolution", static_cast<float>(viewportWidth), static_cast<float>(viewportHeight),
-        static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight));*/
+    Texture tex("res/textures/cat.png");
+    tex.Bind();
+    shader.SetUniform1i("_Tex", 0); // (name , tex_slot)
 
+    Renderer renderer;
+
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 410");
 
     while (!glfwWindowShouldClose(window))
     {
@@ -89,23 +117,33 @@ int main(void)
         processInput(window);
 
         // Render
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // bg
-        glClear(GL_COLOR_BUFFER_BIT);
-
+        renderer.Clear();
+        renderer.Draw(va, ib, shader);
         
-        double currentTime = glfwGetTime();
-        shader.SetUniform1f("iTime", (float)currentTime);
+        //double currentTime = glfwGetTime();
+        //shader.SetUniform1f("iTime", (float)currentTime);
 
-        va.Bind();
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-        
+    	// Start ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ShowFPSCounter();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
 
     }
 
-    // Cleanup
-    glfwTerminate();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+	glfwTerminate();
     return 0;
 }
 
