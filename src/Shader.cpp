@@ -102,7 +102,7 @@ int Shader::CreateShader()
     if (!tessEvalShaderSource.empty())
     {
         tessEvalShaderID = CompileShader(GL_TESS_EVALUATION_SHADER, tessEvalShaderSource);
-        glAttachShader(tessEvalShaderID, tessEvalShaderID);
+        glAttachShader(shaderProgram, tessEvalShaderID);
 
     }
         

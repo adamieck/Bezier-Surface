@@ -71,8 +71,8 @@
     <None Include="res\shaders\fancy.shader">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="res\shaders\basic.frag" />
-    <None Include="res\shaders\basic.vert" />
+    <None Include="res\shaders\texture.frag" />
+    <None Include="res\shaders\texture.vert" />
     <None Include="res\shaders\fancy.frag" />
     <None Include="res\shaders\fancy.vert" />
     <None Include="src\glm\detail\func_common.inl">
@@ -483,6 +483,8 @@
     <None Include="src\glm\gtx\wrap.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="res\shaders\texture.tcs" />
+    <None Include="res\shaders\texture.tes" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Renderer.h">
@@ -1380,6 +1382,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\imgui\imgui_impl_opengl3_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -164,8 +164,10 @@
     <ClCompile Include="src\VertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\shaders\basic.frag" />
-    <None Include="res\shaders\basic.vert" />
+    <None Include="res\shaders\texture.frag" />
+    <None Include="res\shaders\texture.tcs" />
+    <None Include="res\shaders\texture.tes" />
+    <None Include="res\shaders\texture.vert" />
     <None Include="res\shaders\fancy.frag" />
     <None Include="res\shaders\fancy.shader" />
     <None Include="res\shaders\fancy.vert" />
@@ -307,6 +309,7 @@
     <None Include="src\glm\gtx\wrap.inl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\glm\common.hpp" />
     <ClInclude Include="src\glm\detail\compute_common.hpp" />
     <ClInclude Include="src\glm\detail\compute_vector_relational.hpp" />

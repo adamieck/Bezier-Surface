@@ -1,6 +1,7 @@
 #version 410 core
 
 in vec2 _texCoord;
+in vec4 TEPosition;
 
 layout(location = 0) out vec4 color;
 
