@@ -165,6 +165,7 @@
     <ClCompile Include="src\VertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="res\shaders\basic.frag" />
     <None Include="res\shaders\texture.frag" />
     <None Include="res\shaders\texture.tcs" />
     <None Include="res\shaders\texture.tes" />

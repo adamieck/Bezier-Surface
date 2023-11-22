@@ -485,6 +485,7 @@
     </None>
     <None Include="res\shaders\texture.tcs" />
     <None Include="res\shaders\texture.tes" />
+    <None Include="res\shaders\basic.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Renderer.h">

@@ -35,13 +35,15 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 bool isWireframe = false;
+bool isFill = true;
 bool _enableCameraControls = true;
 bool _leftMouseButtonPressed = false;
 bool lightTree = false;
 
 bool hasTexture = true;
 bool hasNormals = true;
-
+bool hasReflectors = true;
+bool hasLight = true;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -160,12 +162,12 @@ int main(void)
     glEnable(GL_DEPTH_TEST);
 
 
-    /* ACTUAL CODE STARTS HERE */
+    /* CODE STARTS HERE */
 
     float vertices[] = {                // tex coords
     0.0f, 1.0f, 0.0f,         0.0f, 1.0f,
     1.0 /3.0, 1.0f, 0.0f,     1.0 / 3.0, 1.0f,
-    2.0 / 3.0, 1.0f, 1.0f,    2.0 / 3.0, 1.0f,
+    2.0 / 3.0, 1.0f, 0.0f,    2.0 / 3.0, 1.0f,
     1.0f, 1.0f, 0.0f,         1.0f, 1.0f,
     
     0.0f, 2.0/ 3.0, 0.0f,       0.0f, 2.0 / 3.0,
@@ -200,6 +202,15 @@ int main(void)
         .AddShader("res/shaders/texture.tes", ShaderType::TESS_EVAL);
     shader.Build();
     shader.Bind();
+
+    /*
+    Shader shaderWire;
+    shaderWire.AddShader("res/shaders/texture.vert", ShaderType::VERTEX)
+        .AddShader("res/shaders/basic.frag", ShaderType::FRAGMENT)
+        .AddShader("res/shaders/texture.tcs", ShaderType::TESS_CTRL)
+        .AddShader("res/shaders/texture.tes", ShaderType::TESS_EVAL);
+    shaderWire.Build();
+    //shaderWire.Bind();*/
 
     Texture tex("res/textures/stone_floor.jpg", 0);
     tex.Bind(0);
@@ -236,6 +247,7 @@ int main(void)
     float minArg = 0.1f;
     float direction = 1.0f;
     glm::vec3 lightColor(1.0, 1.0, 1.0);
+    float reflectorAlpha = 0.1f;
     shader.SetUniform1f("Kd", Kd);
     shader.SetUniform1f("Ks", Ks);
     shader.SetUniform1f("m", m);
@@ -258,6 +270,7 @@ int main(void)
         renderer.SetPolygonMode(isWireframe ? GL_LINE : GL_FILL);
 
 
+
         // MVP //
         model = glm::rotate(glm::mat4(1.0f),  glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
@@ -269,6 +282,9 @@ int main(void)
 
         shader.SetUniform1i("hasTexture", (int)hasTexture);
         shader.SetUniform1i("hasNormals", (int)hasNormals);
+        shader.SetUniform1i("hasReflectors", (int)hasReflectors);
+        shader.SetUniform1i("hasLight", (int)hasLight);
+
 
         // LIGHT ANIMATION //
         if (!paused)
@@ -290,6 +306,10 @@ int main(void)
         // Main Draw Call
         renderer.Draw(va, shader, sizeof(vertices) / (sizeof(float) * 5));
 
+
+        
+
+
     	// ImGui here //
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -298,6 +318,8 @@ int main(void)
         FPSCounter(deltaTime);
         ImGui::Separator();
         ImGui::Checkbox("Wireframe", &isWireframe);
+        //ImGui::Checkbox("Fill", &isFill);
+
 
         // Light
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
@@ -315,6 +337,10 @@ int main(void)
 
             ImGui::ColorEdit3("Color", (float*)&lightColor);
             shader.SetUniform3fv("LightColor", lightColor);
+            ImGui::Checkbox("Light?", &hasLight);
+            ImGui::Checkbox("Reflectors?", &hasReflectors);
+            ImGui::SliderFloat("reflectorAlpha", &reflectorAlpha, 0.0, 20.0);
+            shader.SetUniform1f("reflectorAlpha", reflectorAlpha);
 
             if (ImGui::Button("Toggle Animation")) {
                 paused = !paused;
