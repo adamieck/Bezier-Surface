@@ -18,6 +18,8 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 #include "glm/gtc/matrix_transform.hpp"
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
+
 
 int WIDTH = 800;
 int HEIGHT = 600;
@@ -36,6 +38,9 @@ bool isWireframe = false;
 bool _enableCameraControls = true;
 bool _leftMouseButtonPressed = false;
 bool lightTree = false;
+
+bool hasTexture = true;
+bool hasNormals = true;
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -90,7 +95,6 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 
 }
 
-// ImGui stuff
 void FPSCounter(float deltaTime)
 {
     float fps = 1.0f / deltaTime;
@@ -98,8 +102,30 @@ void FPSCounter(float deltaTime)
     ImGui::Text("FPS: %.1f", fps);
 }
 
-// End of ImGui stuff
+void DisplayFileDialog(Texture* texture, const char* buttonTitle, const char* dialogTitle, unsigned slot)
+{
+    if (ImGui::Button(buttonTitle))
+    {
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", dialogTitle, ".png,.jpg", ".");
+    }
+    // display
+    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+    {
+        // action if OK
+        if (ImGuiFileDialog::Instance()->IsOk())
+        {
+            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+            // action
 
+            texture->ChangeTexture(filePathName);
+            texture->Bind(slot);
+        }
+
+        // close
+        ImGuiFileDialog::Instance()->Close();
+    }
+}
 
 int main(void) 
 {
@@ -137,9 +163,9 @@ int main(void)
     /* ACTUAL CODE STARTS HERE */
 
     float vertices[] = {                // tex coords
-    0.0f, 1.0f, 1.0f,         0.0f, 1.0f,
+    0.0f, 1.0f, 0.0f,         0.0f, 1.0f,
     1.0 /3.0, 1.0f, 0.0f,     1.0 / 3.0, 1.0f,
-    2.0 / 3.0, 1.0f, 0.0f,    2.0 / 3.0, 1.0f,
+    2.0 / 3.0, 1.0f, 1.0f,    2.0 / 3.0, 1.0f,
     1.0f, 1.0f, 0.0f,         1.0f, 1.0f,
     
     0.0f, 2.0/ 3.0, 0.0f,       0.0f, 2.0 / 3.0,
@@ -159,12 +185,6 @@ int main(void)
 
     };
 
-    /*unsigned int indices[] = {
-        0, 1, 2,
-        0, 2, 3
-    };*/
-
-
     VertexArray va;
     VertexBuffer vb(vertices, sizeof(vertices));
     VBLayout layout;
@@ -172,8 +192,6 @@ int main(void)
     layout.Push(GL_FLOAT, 3);
     layout.Push(GL_FLOAT, 2);
     va.AddBuffer(vb, layout);
-
-    //IndexBuffer ib(indices, sizeof(indices) / sizeof(unsigned int)); // (, count)
 
     Shader shader;
     shader.AddShader("res/shaders/texture.vert", ShaderType::VERTEX)
@@ -183,9 +201,15 @@ int main(void)
     shader.Build();
     shader.Bind();
 
-    Texture tex("res/textures/cat.png");
-    tex.Bind();
+    Texture tex("res/textures/stone_floor.jpg", 0);
+    tex.Bind(0);
     shader.SetUniform1i("_Tex", 0); // (name , tex_slot)
+
+    Texture normalmap("res/normalmaps/stone_floor.jpg", 1);
+    normalmap.Bind(1);
+    shader.SetUniform1i("_NormalMap", 1);
+    glm::vec4 col = glm::vec4(0.70f, 0.745f, 0.99f, 1.0f);
+    shader.SetUniform4fv("_Color", col);
 
     Renderer renderer;
 
@@ -200,7 +224,8 @@ int main(void)
     glm::mat4 MVP;
 
 	glPatchParameteri(GL_PATCH_VERTICES, 16);
-    shader.SetUniform1f("TessLevel", 16.0);
+    int tessLevel = 16;
+    shader.SetUniform1f("TessLevel", float(tessLevel));
 
     float Kd = 0.5f;
     float Ks = 0.5f;
@@ -224,6 +249,7 @@ int main(void)
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+
         // Process input
         processInput(window);
 
@@ -233,7 +259,7 @@ int main(void)
 
 
         // MVP //
-        model = glm::rotate(glm::mat4(1.0f),  glm::radians(-80.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::rotate(glm::mat4(1.0f),  glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
         view = camera.GetViewMatrix();
         proj = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
@@ -241,6 +267,10 @@ int main(void)
 
         shader.SetUniformMatrix4f("MVP", MVP);
 
+        shader.SetUniform1i("hasTexture", (int)hasTexture);
+        shader.SetUniform1i("hasNormals", (int)hasNormals);
+
+        // LIGHT ANIMATION //
         if (!paused)
         {
             float speed = 4.0f;
@@ -257,7 +287,7 @@ int main(void)
             shader.SetUniform3f("LightPosition", x + startPos, y + startPos, z);
         }
 
-        // Draw Call
+        // Main Draw Call
         renderer.Draw(va, shader, sizeof(vertices) / (sizeof(float) * 5));
 
     	// ImGui here //
@@ -289,27 +319,53 @@ int main(void)
             if (ImGui::Button("Toggle Animation")) {
                 paused = !paused;
             }
-            if(ImGui::Button("reset"))
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Textures"))
+        {
+            ImGui::Checkbox("Texture?", &hasTexture);
+
+            if (hasTexture)
             {
-                arg = 0;
+                ImGui::Image(reinterpret_cast<void*>(static_cast <intptr_t>(tex.GetID())), ImVec2(100, 100), ImVec2(0, 1), ImVec2(1, 0));
+                DisplayFileDialog(&tex, "Change texture...", "Choose texture", 0);
+            }
+            else
+            {
+                ImGui::ColorEdit4("Solid Color", (float*)&col);
+                shader.SetUniform4fv("_Color", col);
+            }
+
+            ImGui::Checkbox("NormalMap?", &hasNormals);
+            if (hasNormals)
+            {
+                ImGui::Image(reinterpret_cast<void*>(static_cast <intptr_t>(normalmap.GetID())), ImVec2(100, 100), ImVec2(0, 1), ImVec2(1, 0));
+                DisplayFileDialog(&normalmap, "Change normal...", "Choose normalmap", 1);
             }
             ImGui::TreePop();
         }
-        //
-        if(ImGui::TreeNode("Bezier"))
+        
+        if(ImGui::TreeNode("Surface"))
         {
+            ImGui::SliderInt("Tesselation Level", &tessLevel , 4, 64);
+            shader.SetUniform1f("TessLevel", float(tessLevel));
+
+
             for (int i = 0; i < 16; i++)
             {
                 ImGui::SliderFloat(
-                    "Slider", &vertices[i * 5 + 2],
-                    0.0f, 1.0f                                // Slider range
+                    ("Ctrl Point " + std::to_string(i)).c_str(), & vertices[i * 5 + 2],
+                    0.0f, 1.0f                              
                 );
-                vb.Update(vertices, sizeof(vertices));
             }
+        	vb.Update(vertices, sizeof(vertices));
 
 
             ImGui::TreePop();
         }
+
+
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

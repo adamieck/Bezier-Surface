@@ -66,11 +66,11 @@
     <ClCompile Include="src\imgui\imgui_impl_opengl3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ImGuiFileDialog\ImGuiFileDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\shaders\fancy.shader">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="res\shaders\texture.frag" />
     <None Include="res\shaders\texture.vert" />
     <None Include="res\shaders\fancy.frag" />
@@ -1387,9 +1387,33 @@
     <ClInclude Include="src\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\ImGuiFileDialog\dirent\dirent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ImGuiFileDialog\stb\stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ImGuiFileDialog\stb\stb_image_resize.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ImGuiFileDialog\ImGuiFileDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ImGuiFileDialog\ImGuiFileDialogConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\textures\cat.png">
+    <Image Include="res\textures\stone_floor.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\normalmaps\brick_normalmap.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\normalmaps\normal_map.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\normalmaps\stone_floor.jpg">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

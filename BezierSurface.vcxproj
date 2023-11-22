@@ -88,7 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)dependencies\GLFW\include;$(SolutionDir)dependencies\GLAD\include;$(SolutionDir)dependencies\GLAD;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\imgui;$(SolutionDir)src;$(SolutionDir)dependencies\GLFW\include;$(SolutionDir)dependencies\GLAD\include;$(SolutionDir)dependencies\GLAD;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -105,7 +105,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)dependencies\GLFW\include;$(SolutionDir)dependencies\GLAD\include;$(SolutionDir)dependencies\GLAD;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\imgui;$(SolutionDir)src;$(SolutionDir)dependencies\GLFW\include;$(SolutionDir)dependencies\GLAD\include;$(SolutionDir)dependencies\GLAD;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -148,6 +148,7 @@
     <ClCompile Include="dependencies\GLAD\glad.c" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\glm\detail\glm.cpp" />
+    <ClCompile Include="src\ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="src\imgui\imgui.cpp" />
     <ClCompile Include="src\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\imgui\imgui_draw.cpp" />
@@ -169,7 +170,6 @@
     <None Include="res\shaders\texture.tes" />
     <None Include="res\shaders\texture.vert" />
     <None Include="res\shaders\fancy.frag" />
-    <None Include="res\shaders\fancy.shader" />
     <None Include="res\shaders\fancy.vert" />
     <None Include="src\glm\detail\func_common.inl" />
     <None Include="src\glm\detail\func_common_simd.inl" />
@@ -592,6 +592,11 @@
     <ClInclude Include="src\glm\vec3.hpp" />
     <ClInclude Include="src\glm\vec4.hpp" />
     <ClInclude Include="src\glm\vector_relational.hpp" />
+    <ClInclude Include="src\ImGuiFileDialog\dirent\dirent.h" />
+    <ClInclude Include="src\ImGuiFileDialog\ImGuiFileDialog.h" />
+    <ClInclude Include="src\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
+    <ClInclude Include="src\ImGuiFileDialog\stb\stb_image.h" />
+    <ClInclude Include="src\ImGuiFileDialog\stb\stb_image_resize.h" />
     <ClInclude Include="src\imgui\imconfig.h" />
     <ClInclude Include="src\imgui\imgui.h" />
     <ClInclude Include="src\imgui\imgui_impl_glfw.h" />
@@ -611,7 +616,10 @@
     <ClInclude Include="src\VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\textures\cat.png" />
+    <Image Include="res\normalmaps\brick_normalmap.png" />
+    <Image Include="res\normalmaps\normal_map.jpg" />
+    <Image Include="res\normalmaps\stone_floor.jpg" />
+    <Image Include="res\textures\stone_floor.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
