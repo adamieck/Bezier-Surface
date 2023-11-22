@@ -35,6 +35,7 @@ float lastFrame = 0.0f;
 bool isWireframe = false;
 bool _enableCameraControls = true;
 bool _leftMouseButtonPressed = false;
+bool lightTree = false;
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -89,13 +90,16 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 
 }
 
-
+// ImGui stuff
 void FPSCounter(float deltaTime)
 {
     float fps = 1.0f / deltaTime;
 
     ImGui::Text("FPS: %.1f", fps);
 }
+
+// End of ImGui stuff
+
 
 int main(void) 
 {
@@ -106,7 +110,7 @@ int main(void)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Hello Window", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Bezier Surface", NULL, NULL);
     if (!window)
     {
         std::cout << "Failed to create GLFW window!\n";
@@ -133,19 +137,19 @@ int main(void)
     /* ACTUAL CODE STARTS HERE */
 
     float vertices[] = {                // tex coords
-    0.0f, 1.0f, 0.0f,         0.0f, 1.0f,
+    0.0f, 1.0f, 1.0f,         0.0f, 1.0f,
     1.0 /3.0, 1.0f, 0.0f,     1.0 / 3.0, 1.0f,
     2.0 / 3.0, 1.0f, 0.0f,    2.0 / 3.0, 1.0f,
     1.0f, 1.0f, 0.0f,         1.0f, 1.0f,
     
     0.0f, 2.0/ 3.0, 0.0f,       0.0f, 2.0 / 3.0,
-    1.0 / 3.0, 2.0 / 3.0, 1.0f, 1.0 / 3.0, 2.0 / 3.0,
+    1.0 / 3.0, 2.0 / 3.0, 0.0f, 1.0 / 3.0, 2.0 / 3.0,
     2.0 / 3.0, 2.0 / 3.0, 0.0f, 2.0 / 3.0, 2.0 / 3.0,
     1.0f, 2.0 / 3.0, 0.0f,      1.0f, 2.0 / 3.0,
     
     0.0f, 1.0 / 3.0, 0.0f,      0.0f, 1.0 / 3.0,
     1.0 / 3.0, 1.0 / 3.0, 0.0f, 1.0 / 3.0, 1.0 / 3.0,
-    2.0 / 3.0, 1.0 / 3.0, 0.5f, 2.0 / 3.0, 1.0 / 3.0,
+    2.0 / 3.0, 1.0 / 3.0, 0.0f, 2.0 / 3.0, 1.0 / 3.0,
     1.0f, 1.0 / 3.0, 0.0f,      1.0f, 1.0 / 3.0,
     
     0.0f, 0.0f, 0.0f,      0.0f, 0.0f,
@@ -195,9 +199,25 @@ int main(void)
     glm::mat4 proj;
     glm::mat4 MVP;
 
-    renderer.SetPolygonMode(GL_LINE);
-    glPatchParameteri(GL_PATCH_VERTICES, 16);
+	glPatchParameteri(GL_PATCH_VERTICES, 16);
     shader.SetUniform1f("TessLevel", 16.0);
+
+    float Kd = 0.5f;
+    float Ks = 0.5f;
+    float m = 1.0f;
+    float zLight = 0.3f;
+    bool paused = false;
+    float maxArg = 25.0f;
+    float minArg = 0.1f;
+    float direction = 1.0f;
+    glm::vec3 lightColor(1.0, 1.0, 1.0);
+    shader.SetUniform1f("Kd", Kd);
+    shader.SetUniform1f("Ks", Ks);
+    shader.SetUniform1f("m", m);
+    shader.SetUniform3f("LightPosition", 0.5f, 0.5f, zLight);
+    shader.SetUniform3fv("LightColor", lightColor);
+
+    float arg = 0;
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -209,23 +229,35 @@ int main(void)
 
         // Render
         renderer.Clear();
-        //renderer.Draw(va, ib, shader);
+        renderer.SetPolygonMode(isWireframe ? GL_LINE : GL_FILL);
+
 
         // MVP //
         model = glm::rotate(glm::mat4(1.0f),  glm::radians(-80.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
+        model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
         view = camera.GetViewMatrix();
-
         proj = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
         MVP = proj * view * model;
 
-        //shader.SetUniformMatrix4f("model", model);
-        //shader.SetUniformMatrix4f("view", view);
-        //shader.SetUniformMatrix4f("projection", proj);
-        glm::mat4 mv = view * model;
-        shader.SetUniformMatrix4f("ModelViewMatrix", mv);
         shader.SetUniformMatrix4f("MVP", MVP);
 
+        if (!paused)
+        {
+            float speed = 4.0f;
+            arg += static_cast<float>(deltaTime) * speed * direction;
+
+            if (arg > maxArg || arg < minArg) {
+                direction = -direction; 
+            }
+            float startPos = 0.5f;
+            float offset = 0.5;
+            float x = arg / 40 * cos(arg);
+            float y = arg / 40 * sin(arg);
+            float z = zLight;
+            shader.SetUniform3f("LightPosition", x + startPos, y + startPos, z);
+        }
+
+        // Draw Call
         renderer.Draw(va, shader, sizeof(vertices) / (sizeof(float) * 5));
 
     	// ImGui here //
@@ -234,7 +266,50 @@ int main(void)
         ImGui::NewFrame();
 
         FPSCounter(deltaTime);
+        ImGui::Separator();
         ImGui::Checkbox("Wireframe", &isWireframe);
+
+        // Light
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode("Light"))
+        {
+			ImGui::Text("Parameters:");
+            ImGui::SliderFloat("Z-Position", &zLight, 0.0, 2.0);
+            ImGui::SliderFloat("Kd", &Kd, 0.0, 1.0);
+            shader.SetUniform1f("Kd", Kd);
+
+            ImGui::SliderFloat("Ks", &Ks, 0.0, 1.0);
+            shader.SetUniform1f("Ks", Ks);
+            ImGui::SliderFloat("m", &m, 1.0, 100.0);
+            shader.SetUniform1f("m", m);
+
+            ImGui::ColorEdit3("Color", (float*)&lightColor);
+            shader.SetUniform3fv("LightColor", lightColor);
+
+            if (ImGui::Button("Toggle Animation")) {
+                paused = !paused;
+            }
+            if(ImGui::Button("reset"))
+            {
+                arg = 0;
+            }
+            ImGui::TreePop();
+        }
+        //
+        if(ImGui::TreeNode("Bezier"))
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                ImGui::SliderFloat(
+                    "Slider", &vertices[i * 5 + 2],
+                    0.0f, 1.0f                                // Slider range
+                );
+                vb.Update(vertices, sizeof(vertices));
+            }
+
+
+            ImGui::TreePop();
+        }
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

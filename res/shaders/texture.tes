@@ -2,14 +2,20 @@
 
 layout( quads, equal_spacing, ccw ) in;
 
-out vec3 TENormal;
+//out vec3 TENormal;
 out vec4 TEPosition;
+out vec4 Position;
+out vec2 TexCoord;
+out vec3 Normal;
 
 in vec2 TextureCoord[];
 
-
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
 uniform mat4 MVP;
-uniform mat4 ModelViewMatrix;
+//uniform mat3 NormalMatrix;
+
 
 void basisFunctions( out float[4] b, out float[4] db, float t )
 {
@@ -76,11 +82,11 @@ void main()
      p20*bu[2]*dbv[0] + p21*bu[2]*dbv[1] + p22*bu[2]*dbv[2] + p23*bu[2]*dbv[3] +
      p30*bu[3]*dbv[0] + p31*bu[3]*dbv[1] + p32*bu[3]*dbv[2] + p33*bu[3]*dbv[3];
 
-    vec3 n = normalize( cross(du.xyz, dv.xyz) );
+    Normal = normalize( cross(du.xyz, dv.xyz) );
 
     // Transform to clip coordinates
     gl_Position = MVP * TEPosition;
 
     // Convert to camera coordinates
-    //TEPosition = ModelViewMatrix * TEPosition;
+    Position = TEPosition;
 }
