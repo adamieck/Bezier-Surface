@@ -5,6 +5,8 @@
 #include <sstream>
 #include <fstream>
 
+#include "glm/gtc/type_ptr.inl"
+
 Shader::Shader()
 	: _rendererID(0)
 {
@@ -166,7 +168,7 @@ void Shader::SetUniform4fv(const std::string& name, glm::vec4 v)
 
 void Shader::SetUniformMatrix4f(const std::string& name, const glm::mat4& mat)
 {
-    glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, &mat[0][0]);
+    glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, glm::value_ptr(mat));
 }
 
 int Shader::GetUniformLocation(const std::string& name)

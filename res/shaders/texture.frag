@@ -45,13 +45,15 @@ vec3 Reflector( vec3 pos, vec3 norm)
     vec3 ref2Pos = vec3(1.0, 0.0, m);
     vec3 ref3Pos = vec3(1.0/2.0, 1.0, m);
 
-    vec3 SpotDir1 =  normalize(ref1Pos - vec3(1/2, 1/2, 0));
-    vec3 SpotDir2 = normalize(ref2Pos - vec3(1/2, 1/2, 0));
-    vec3 SpotDir3 = normalize( ref3Pos - vec3(1/2, 1/2, 0));
+    vec3 target = vec3(1.0/2.0, 1.0/2.0, 0);
+
+    vec3 SpotDir1 =  normalize(ref1Pos - target);
+    vec3 SpotDir2 = normalize(ref2Pos - target);
+    vec3 SpotDir3 = normalize(ref3Pos - target);
 
     vec3 L, R, diffuse;
     float LDotN, VDotR;
-    int k = 1;
+    int k = 20;
     vec3 Il;
 
     // 1

@@ -63,6 +63,16 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        camera.ProcessMouseMovement(0, 1);
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        camera.ProcessMouseMovement(0, -1);
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        camera.ProcessMouseMovement(-1, 0);
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        camera.ProcessMouseMovement(1, 0);
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
@@ -94,6 +104,11 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 
         camera.ProcessMouseMovement(xoffset, yoffset);
     }
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
+    {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
 
 }
 
@@ -145,7 +160,7 @@ int main(void)
         glfwTerminate();
     }
     glfwMakeContextCurrent(window);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetCursorPosCallback(window, mouse_callback);
 
     
@@ -170,9 +185,9 @@ int main(void)
     2.0 / 3.0, 1.0f, 0.0f,    2.0 / 3.0, 1.0f,
     1.0f, 1.0f, 0.0f,         1.0f, 1.0f,
     
-    0.0f, 2.0/ 3.0, 0.0f,       0.0f, 2.0 / 3.0,
+    0.0f, 2.0/ 3.0, 1.0f,       0.0f, 2.0 / 3.0,
     1.0 / 3.0, 2.0 / 3.0, 0.0f, 1.0 / 3.0, 2.0 / 3.0,
-    2.0 / 3.0, 2.0 / 3.0, 0.0f, 2.0 / 3.0, 2.0 / 3.0,
+    2.0 / 3.0, 2.0 / 3.0, -1.0f, 2.0 / 3.0, 2.0 / 3.0,
     1.0f, 2.0 / 3.0, 0.0f,      1.0f, 2.0 / 3.0,
     
     0.0f, 1.0 / 3.0, 0.0f,      0.0f, 1.0 / 3.0,
@@ -182,7 +197,7 @@ int main(void)
     
     0.0f, 0.0f, 0.0f,      0.0f, 0.0f,
     1.0 / 3.0, 0.0f, 0.0f, 1.0 / 3.0, 0.0f,
-    2.0 / 3.0, 0.0f, 0.0f, 2.0 / 3.0, 0.0f,
+    2.0 / 3.0, 0.0f, 0.1f, 2.0 / 3.0, 0.0f,
     1.0f, 0.0f, 0.0f,      1.0f, 0.0f,
 
     };
@@ -194,7 +209,7 @@ int main(void)
     layout.Push(GL_FLOAT, 3);
     layout.Push(GL_FLOAT, 2);
     va.AddBuffer(vb, layout);
-
+    
     Shader shader;
     shader.AddShader("res/shaders/texture.vert", ShaderType::VERTEX)
         .AddShader("res/shaders/texture.frag", ShaderType::FRAGMENT)
@@ -203,14 +218,14 @@ int main(void)
     shader.Build();
     shader.Bind();
 
-    /*
+
+    // Wireframe shader
     Shader shaderWire;
     shaderWire.AddShader("res/shaders/texture.vert", ShaderType::VERTEX)
         .AddShader("res/shaders/basic.frag", ShaderType::FRAGMENT)
         .AddShader("res/shaders/texture.tcs", ShaderType::TESS_CTRL)
         .AddShader("res/shaders/texture.tes", ShaderType::TESS_EVAL);
     shaderWire.Build();
-    //shaderWire.Bind();*/
 
     Texture tex("res/textures/stone_floor.jpg", 0);
     tex.Bind(0);
@@ -230,13 +245,19 @@ int main(void)
     ImGui_ImplOpenGL3_Init("#version 410");
 
     glm::mat4 model;
+    glm::mat4 modelY;
+    glm::mat4 modelZ;
     glm::mat4 view;
     glm::mat4 proj;
     glm::mat4 MVP;
 
-	glPatchParameteri(GL_PATCH_VERTICES, 16);
     int tessLevel = 16;
+	glPatchParameteri(GL_PATCH_VERTICES, tessLevel);
     shader.SetUniform1f("TessLevel", float(tessLevel));
+    shaderWire.Bind();
+    shaderWire.SetUniform1f("TessLevel", float(tessLevel));
+    shader.Bind();
+
 
     float Kd = 0.5f;
     float Ks = 0.5f;
@@ -253,8 +274,8 @@ int main(void)
     shader.SetUniform1f("m", m);
     shader.SetUniform3f("LightPosition", 0.5f, 0.5f, zLight);
     shader.SetUniform3fv("LightColor", lightColor);
-
     float arg = 0;
+    float rotateTime = 0;
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -267,24 +288,51 @@ int main(void)
 
         // Render
         renderer.Clear();
-        renderer.SetPolygonMode(isWireframe ? GL_LINE : GL_FILL);
+        float rotateSpeed = 50.0f;
+        rotateTime = (rotateTime + deltaTime * rotateSpeed) < 360 ? (rotateTime + deltaTime * rotateSpeed) : 0;
 
+        // X ROTATION
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.5f, 0.5f, 0.0));
+        model = glm::rotate(model,  glm::radians(rotateTime), glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::translate(model, glm::vec3(-0.5, -0.5, 0.0));
 
+        // Y ROTATION
+        modelY = glm::mat4(1.0f);
+        modelY = glm::translate(modelY, glm::vec3(0.5f, 0.5f, 0.0));
+        modelY = glm::rotate(modelY, glm::radians(rotateTime), glm::vec3(0.0f, 1.0f, 0.0f));
+        modelY = glm::translate(modelY, glm::vec3(-0.5, -0.5, 0.0));
 
-        // MVP //
-        model = glm::rotate(glm::mat4(1.0f),  glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
+        // Z ROTATION
+        modelZ = glm::mat4(1.0f);
+        modelZ = glm::translate(modelZ, glm::vec3(0.5f, 0.5f, 0.0));
+        modelZ = glm::rotate(modelZ, glm::radians(rotateTime), glm::vec3(0.0f, 0.0f, 1.0f));
+        modelZ = glm::translate(modelZ, glm::vec3(-0.5, -0.5, 0.0));
+
         view = camera.GetViewMatrix();
         proj = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
         MVP = proj * view * model;
 
+        // shader Uniforms
+        shader.Bind();
         shader.SetUniformMatrix4f("MVP", MVP);
+        shader.SetUniform1f("TessLevel", float(tessLevel));
 
         shader.SetUniform1i("hasTexture", (int)hasTexture);
         shader.SetUniform1i("hasNormals", (int)hasNormals);
         shader.SetUniform1i("hasReflectors", (int)hasReflectors);
-        shader.SetUniform1i("hasLight", (int)hasLight);
+    	shader.SetUniform1i("hasLight", (int)hasLight);
+        shader.SetUniform1f("Kd", Kd);
+        shader.SetUniform1f("Ks", Ks);
+        shader.SetUniform1f("m", m);
+        shader.SetUniform3fv("LightColor", lightColor);
 
+        // ShaderWire 
+        shaderWire.Bind();
+        shaderWire.SetUniformMatrix4f("MVP", MVP);
+        shaderWire.SetUniform1f("TessLevel", (float)tessLevel);
+
+        shader.Bind();
 
         // LIGHT ANIMATION //
         if (!paused)
@@ -304,10 +352,35 @@ int main(void)
         }
 
         // Main Draw Call
-        renderer.Draw(va, shader, sizeof(vertices) / (sizeof(float) * 5));
 
+        //glDisable(GL_DEPTH_TEST);
 
-        
+        if (isFill)
+        {
+            renderer.Draw(va, shader, sizeof(vertices) / (sizeof(float) * 5));
+            glm::mat4 MVPY = proj * view * modelY;
+            shader.SetUniformMatrix4f("MVP", MVPY);
+            renderer.Draw(va, shader, sizeof(vertices) / (sizeof(float) * 5));
+            glm::mat4 MVPZ = proj * view * modelZ;
+            shader.SetUniformMatrix4f("MVP", MVPZ);
+            renderer.Draw(va, shader, sizeof(vertices) / (sizeof(float) * 5));
+
+        }
+        if (isWireframe)
+        {
+            renderer.SetPolygonMode(GL_LINE);
+            renderer.Draw(va, shaderWire, sizeof(vertices) / (sizeof(float) * 5));
+            glm::mat4 MVPY = proj * view * modelY;
+            shaderWire.SetUniformMatrix4f("MVP", MVPY);
+            renderer.Draw(va, shaderWire, sizeof(vertices) / (sizeof(float) * 5));
+            glm::mat4 MVPZ = proj * view * modelZ;
+            shaderWire.SetUniformMatrix4f("MVP", MVPZ);
+            renderer.Draw(va, shaderWire, sizeof(vertices) / (sizeof(float) * 5));
+        }
+        renderer.SetPolygonMode(GL_FILL);
+        glEnable(GL_DEPTH_TEST);
+        shader.Bind();
+
 
 
     	// ImGui here //
@@ -318,7 +391,7 @@ int main(void)
         FPSCounter(deltaTime);
         ImGui::Separator();
         ImGui::Checkbox("Wireframe", &isWireframe);
-        //ImGui::Checkbox("Fill", &isFill);
+        ImGui::Checkbox("Fill", &isFill);
 
 
         // Light
@@ -328,19 +401,15 @@ int main(void)
 			ImGui::Text("Parameters:");
             ImGui::SliderFloat("Z-Position", &zLight, 0.0, 2.0);
             ImGui::SliderFloat("Kd", &Kd, 0.0, 1.0);
-            shader.SetUniform1f("Kd", Kd);
 
             ImGui::SliderFloat("Ks", &Ks, 0.0, 1.0);
-            shader.SetUniform1f("Ks", Ks);
             ImGui::SliderFloat("m", &m, 1.0, 100.0);
-            shader.SetUniform1f("m", m);
 
             ImGui::ColorEdit3("Color", (float*)&lightColor);
-            shader.SetUniform3fv("LightColor", lightColor);
             ImGui::Checkbox("Light?", &hasLight);
             ImGui::Checkbox("Reflectors?", &hasReflectors);
-            ImGui::SliderFloat("reflectorAlpha", &reflectorAlpha, 0.0, 20.0);
-            shader.SetUniform1f("reflectorAlpha", reflectorAlpha);
+            //ImGui::SliderFloat("reflectorAlpha", &reflectorAlpha, 0.0, 20.0);
+            //shader.SetUniform1f("reflectorAlpha", reflectorAlpha);
 
             if (ImGui::Button("Toggle Animation")) {
                 paused = !paused;
@@ -375,7 +444,7 @@ int main(void)
         if(ImGui::TreeNode("Surface"))
         {
             ImGui::SliderInt("Tesselation Level", &tessLevel , 4, 64);
-            shader.SetUniform1f("TessLevel", float(tessLevel));
+
 
 
             for (int i = 0; i < 16; i++)
